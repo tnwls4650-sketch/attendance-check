@@ -10,9 +10,11 @@
                  · 불참자는 목록에서 빼면 됩니다.
 */
 window.ATTENDANCE = {
-  title: "출석체크",
-  subtitle: "'26 Value Chain School(11월) · 영업본부",
+  title: "11월 영업본부 출석체크",
+  subtitle: "'26 Value Chain School",
   teams: 9,
+  shuffleSeed: 2026, // 조 구성 번호. 값을 바꾸면 같은 규칙으로 다른 조 편성이 나옵니다 (0이면 기본 순서)
+  swaps: [["서효림", "허종욱"]], // 두 사람의 조·좌석 맞바꾸기 (서효림 → 9조, 허종욱 → 2조)
   qrUrl: "https://tinyurl.com/yc4y63kn",
   people: [
     ["이윤재","사원A","ENG팀","ENG2파트"],["김기석","대리","ENG팀","진천PJ건설파트"],
