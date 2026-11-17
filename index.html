@@ -11,25 +11,26 @@
   :root{
     --bg:#FBF3F1; --surface:#FFFFFF; --ink:#241F1F; --ink-soft:#7A6E6C; --ink-faint:#B9ADAA;
     --seat-fill:#F6C6C6; --seat-fill-soft:#FBE3E3; --seat-strong:#D8506E; --seat-strong-ink:#4A1528;
-    --green:#2F6F4E; --green-bg:#E4F0E8; --line:#EBDEDB; --radius:14px;
+    --green:#2F6F4E; --green-bg:#E4F0E8; --line:#EBDEDB; --radius:14px; --warn:#8A5A00; --warn-bg:#FFF4D6;
     --font-body:'Noto Sans KR', sans-serif; --font-mono:'IBM Plex Mono', monospace;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#1E1A1A; --surface:#2A2424; --ink:#F3ECEA; --ink-soft:#B3A6A3; --ink-faint:#7D716F;
-      --seat-fill-soft:#3A2A30; --line:#3E3434; --green-bg:#23382C; --green:#8FD0A8;
+      --seat-fill-soft:#3A2A30; --line:#3E3434; --green-bg:#23382C; --green:#8FD0A8; --warn:#F5D68A; --warn-bg:#3A3220;
     }
   }
   :root[data-theme="dark"]{
     --bg:#1E1A1A; --surface:#2A2424; --ink:#F3ECEA; --ink-soft:#B3A6A3; --ink-faint:#7D716F;
-    --seat-fill-soft:#3A2A30; --line:#3E3434; --green-bg:#23382C; --green:#8FD0A8;
+    --seat-fill-soft:#3A2A30; --line:#3E3434; --green-bg:#23382C; --green:#8FD0A8; --warn:#F5D68A; --warn-bg:#3A3220;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);font-family:var(--font-body);color:var(--ink);min-height:100vh;display:flex;justify-content:center;padding:32px 16px 60px;}
   .wrap{width:100%;max-width:420px;}
-  .eyebrow{font-family:var(--font-mono);font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:var(--seat-strong-ink);background:var(--seat-fill-soft);display:inline-block;padding:6px 12px;border-radius:100px;margin-bottom:16px;}
+  .eyebrow{font-family:var(--font-mono);font-size:13px;letter-spacing:0.08em;color:var(--seat-strong-ink);background:var(--seat-fill-soft);display:inline-block;padding:6px 12px;border-radius:100px;margin-bottom:16px;}
   .card{background:var(--surface);border-radius:20px;padding:28px 24px 26px;box-shadow:0 1px 2px rgba(36,31,31,0.04);}
   h1{font-size:27px;font-weight:900;line-height:1.4;margin:0 0 8px;}
+  h1.nowrap{white-space:nowrap;font-size:clamp(18px,6vw,27px);}
   .sub{font-size:17px;color:var(--ink-soft);margin:0 0 20px;line-height:1.5;}
   input[type=text]{width:100%;font-family:var(--font-body);font-size:19px;padding:16px 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);outline:none;}
   input[type=text]:focus{border-color:var(--seat-strong);}
@@ -51,10 +52,13 @@
   .footer-links{text-align:center;margin-top:18px;}
   .footer-links a{font-size:15px;color:var(--ink-faint);text-decoration:none;}
   .admin-back{font-size:16px;color:var(--ink-soft);cursor:pointer;margin-bottom:14px;display:inline-block;text-decoration:none;}
-  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
   .stat{background:var(--bg);border-radius:12px;padding:14px;}
   .stat .n{font-family:var(--font-mono);font-size:26px;font-weight:700;}
   .stat .l{font-size:14px;color:var(--ink-soft);margin-top:2px;}
+  .warn{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:14px;}
+  .pending-box{background:var(--bg);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--ink-soft);margin-bottom:18px;line-height:1.7;}
+  .pending-box b{color:var(--ink);}
   .qr-box{text-align:center;background:var(--bg);border-radius:14px;padding:18px 12px;margin-bottom:20px;}
   .qr-box .inner{display:inline-block;background:#fff;padding:10px;border-radius:10px;}
   .qr-box .url{font-family:var(--font-mono);font-size:13px;color:var(--ink-faint);margin-top:6px;word-break:break-all;}
@@ -63,6 +67,8 @@
   table.admin-table{width:100%;border-collapse:collapse;font-size:15px;}
   table.admin-table th{text-align:left;color:var(--ink-soft);font-weight:500;font-size:13px;padding:7px 4px;border-bottom:1px solid var(--line);}
   table.admin-table td{padding:8px 4px;border-bottom:1px solid var(--line);}
+  .st-done{color:var(--green);font-weight:700;}
+  .st-todo{color:var(--ink-faint);}
   .loading{text-align:center;padding:30px 0;color:var(--ink-soft);font-size:16px;}
 </style>
 </head>
@@ -77,8 +83,9 @@
 <script>
 const CFG = window.ATTENDANCE || { title: '출석체크', subtitle: '', teams: 1, people: [] };
 const root = document.getElementById('root');
+document.title = CFG.title;
 
-// 조 편성: 팀 단위로 묶은 뒤, 인원이 많은 팀부터 조에 돌아가며 배정 → 같은 팀이 한 조에 몰리지 않음
+/* ---------- 조 편성 ---------- */
 // 시드 난수 (같은 seed면 항상 같은 순서)
 function seededRandom(seed){
   let a = seed >>> 0;
@@ -89,8 +96,7 @@ function seededRandom(seed){
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-// 조 편성: 팀 단위로 묶은 뒤, 인원이 많은 팀부터 조에 돌아가며 배정 → 같은 팀이 한 조에 몰리지 않음
-// shuffleSeed가 있으면 팀 순서·사람 순서·시작 조를 섞어서 다른 조 구성을 만듦 (규칙은 동일)
+// 팀 단위로 묶은 뒤, 인원이 많은 팀부터 조에 돌아가며 배정 → 같은 팀이 한 조에 몰리지 않음
 function assignTeams(people, teamCount, seed){
   const rnd = seed ? seededRandom(seed) : null;
   const shuffle = arr => {
@@ -122,6 +128,66 @@ const ATTENDEES = assignTeams(
 );
 const TEAM_COUNT = CFG.teams || 1;
 
+/* ---------- 체크인 기록 ---------- */
+// 이 기기에 남기는 기록 (서버 연결이 안 돼도 동작)
+const LOCAL_KEY = 'attendance-checkins-' + (CFG.title || 'default');
+const PENDING_KEY = LOCAL_KEY + '-pending';
+function readJSON(key, fallback){ try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch(e) { return fallback; } }
+function writeJSON(key, value){ try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {} }
+
+function recordCheckin(a){
+  const local = readJSON(LOCAL_KEY, {});
+  if(!local[a.name]){
+    local[a.name] = { time: new Date().toISOString(), team: a.team, seat: a.seat };
+    writeJSON(LOCAL_KEY, local);
+  }
+  if(!CFG.checkinUrl) return;
+  const payload = { name: a.name, team: a.team, seat: a.seat, time: new Date().toISOString() };
+  sendCheckin(payload).catch(() => {
+    const pend = readJSON(PENDING_KEY, []);
+    pend.push(payload);
+    writeJSON(PENDING_KEY, pend);
+  });
+}
+function sendCheckin(payload){
+  return fetch(CFG.checkinUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(res => { if(!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
+}
+// 실패했던 체크인 다시 보내기
+function flushPending(){
+  if(!CFG.checkinUrl) return;
+  const pend = readJSON(PENDING_KEY, []);
+  if(!pend.length) return;
+  writeJSON(PENDING_KEY, []);
+  pend.forEach(p => sendCheckin(p).catch(() => {
+    const again = readJSON(PENDING_KEY, []); again.push(p); writeJSON(PENDING_KEY, again);
+  }));
+}
+// 관리자: 서버 기록 읽기 (서버가 없거나 실패하면 이 기기 기록)
+async function loadCheckins(){
+  const local = readJSON(LOCAL_KEY, {});
+  if(!CFG.checkinUrl) return { source: 'local', map: local, reason: 'noUrl' };
+  try {
+    const res = await fetch(CFG.checkinUrl, { cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const map = {};
+    (data.checkins || []).forEach(c => { if(c.name && !map[c.name]) map[c.name] = { time: c.time, team: c.team, seat: c.seat }; });
+    return { source: 'server', map };
+  } catch(e) {
+    return { source: 'local', map: local, reason: 'error' };
+  }
+}
+function fmtTime(iso){
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
+
+/* ---------- 좌석 표시 ---------- */
 function teamGridSVG(highlightTeam){
   const cols = Math.ceil(Math.sqrt(TEAM_COUNT));
   const rows = Math.ceil(TEAM_COUNT / cols);
@@ -161,10 +227,11 @@ function seatSVG(highlightSeat){
   </svg>`;
 }
 
+/* ---------- 참가자 화면 ---------- */
 function renderSearch(){
   root.innerHTML = `
     <div class="card">
-      <h1>본인의 이름을 입력해주세요</h1>
+      <h1 class="nowrap">본인의 이름을 입력해주세요</h1>
       <p class="sub">출석 확인과 조·좌석 안내를 도와드릴게요.</p>
       <input type="text" id="nameInput" placeholder="이름 입력 (예: 홍길동)" autocomplete="off">
       <ul class="name-list" id="nameList"></ul>
@@ -191,6 +258,7 @@ function renderSearch(){
     const v = input.value.trim().replace(/\s+/g,'');
     const found = ATTENDEES.find(a=>a.name.replace(/\s+/g,'')===v);
     if(!found){ err.style.display='block'; return; }
+    recordCheckin(found);
     renderConfirm(found);
   }
   input.addEventListener('input', updateSuggestions);
@@ -214,44 +282,78 @@ function renderConfirm(a){
   document.getElementById('backLink').addEventListener('click', e=>{ e.preventDefault(); renderSearch(); });
 }
 
-function showAdmin(){
-  const total = ATTENDEES.length;
+/* ---------- 관리자 화면 ---------- */
+async function showAdmin(){
+  root.innerHTML = `<div class="card"><div class="loading">출석 기록을 불러오는 중...</div></div>`;
+  const info = await loadCheckins();
+  drawAdmin(info);
+}
+
+function drawAdmin(info){
+  const map = info.map;
+  const checked = ATTENDEES.filter(a => map[a.name]);
+  const unchecked = ATTENDEES.filter(a => !map[a.name]);
+
+  let banner = '';
+  if(info.source === 'local'){
+    banner = info.reason === 'error'
+      ? `<div class="warn">저장 서버에 연결하지 못해 <b>이 기기에서 확인한 기록만</b> 보입니다.</div>`
+      : `<div class="warn">체크인 저장소가 설정되지 않아 <b>이 기기에서 확인한 기록만</b> 보입니다.</div>`;
+  }
+
   const byTeam = {};
   ATTENDEES.forEach(a => (byTeam[a.team] = byTeam[a.team] || []).push(a));
   const teamHTML = Object.keys(byTeam).sort((x,y)=>x-y).map(t=>{
-    const rows = byTeam[t].map(a=>`<tr><td>${a.seat}</td><td>${a.name}</td><td>${a.rank||''}</td><td>${a.dept||''}</td><td>${a.part||''}</td></tr>`).join('');
-    const depts = new Set(byTeam[t].map(a=>a.dept)).size;
-    return `<div class="team-block"><h3>${t}조 <span style="font-weight:400;color:var(--ink-soft);font-size:13px;">${byTeam[t].length}명 · ${depts}개 팀</span></h3>
-      <table class="admin-table"><thead><tr><th>좌석</th><th>성명</th><th>직급</th><th>팀</th><th>파트</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const list = byTeam[t];
+    const done = list.filter(a => map[a.name]).length;
+    const rows = list.map(a => {
+      const st = map[a.name]
+        ? `<span class="st-done">✓ ${fmtTime(map[a.name].time)}</span>`
+        : `<span class="st-todo">미확인</span>`;
+      return `<tr><td>${a.seat}</td><td>${a.name}</td><td>${st}</td></tr>`;
+    }).join('');
+    return `<div class="team-block"><h3>${t}조 <span style="font-weight:400;color:var(--ink-soft);font-size:13px;">${done} / ${list.length}명 확인</span></h3>
+      <table class="admin-table"><thead><tr><th>좌석</th><th>성명</th><th>출석</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }).join('');
+
+  const uncheckedNames = unchecked.length
+    ? unchecked.map(a => a.name).join(', ')
+    : '모두 확인되었습니다.';
 
   root.innerHTML = `
     <div class="card">
       <a class="admin-back" href="#" id="adminBack">← 돌아가기</a>
-      <h1>${CFG.title} · 관리자</h1>
-      <p class="sub">${CFG.subtitle || ''} · 전체 ${total}명 · ${TEAM_COUNT}개 조</p>
+      <h1>출석 관리</h1>
+      <p class="sub">${CFG.title}</p>
+      ${banner}
       <div class="stat-grid">
-        <div class="stat"><div class="n">${total}</div><div class="l">참석자</div></div>
-        <div class="stat"><div class="n">${TEAM_COUNT}</div><div class="l">조</div></div>
+        <div class="stat"><div class="n">${checked.length}</div><div class="l">출석 확인</div></div>
+        <div class="stat"><div class="n">${unchecked.length}</div><div class="l">미확인</div></div>
       </div>
+      <div class="pending-box"><b>미확인 (${unchecked.length}명)</b><br>${uncheckedNames}</div>
+      <button class="btn" id="refreshBtn" style="margin-top:0;margin-bottom:18px;">새로고침</button>
       ${CFG.qrUrl ? `<div class="qr-box"><div class="inner" id="qrcodeBox"></div><div style="font-size:14px;color:var(--ink-soft);margin-top:8px;">참가자용 QR · 캡처해서 인쇄하세요</div><div class="url">${CFG.qrUrl}</div></div>` : ''}
       ${teamHTML}
     </div>`;
   document.getElementById('adminBack').addEventListener('click', e=>{ e.preventDefault(); renderSearch(); });
+  document.getElementById('refreshBtn').addEventListener('click', ()=> showAdmin());
   const qrBox = document.getElementById('qrcodeBox');
   if(qrBox && window.QRCode){
     new QRCode(qrBox, { text: CFG.qrUrl, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
   }
 }
 
+/* ---------- 시작 ---------- */
 // 관리자 화면 진입: ?admin=1 또는 제목을 5번 연속 클릭
 let tapCount = 0, tapTimer = null;
-document.getElementById('eyebrowTrigger').textContent = CFG.title;
-document.getElementById('eyebrowTrigger').addEventListener('click', ()=>{
+const eyebrowEl = document.getElementById('eyebrowTrigger');
+eyebrowEl.textContent = CFG.title;
+eyebrowEl.addEventListener('click', ()=>{
   tapCount++; clearTimeout(tapTimer); tapTimer = setTimeout(()=>{ tapCount = 0; }, 1200);
   if(tapCount >= 5){ tapCount = 0; showAdmin(); }
 });
 
+flushPending();
 if(new URLSearchParams(window.location.search).get('admin') === '1'){ showAdmin(); }
 else { renderSearch(); }
 </script>
