@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출석체크</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBF3F1; --surface:#FFFFFF; --ink:#241F1F; --ink-soft:#7A6E6C; --ink-faint:#B9ADAA;
+    --seat-fill:#F6C6C6; --seat-fill-soft:#FBE3E3; --seat-strong:#D8506E; --seat-strong-ink:#4A1528;
+    --green:#2F6F4E; --green-bg:#E4F0E8; --line:#EBDEDB; --radius:14px;
+    --font-body:'Noto Sans KR', sans-serif; --font-mono:'IBM Plex Mono', monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1E1A1A; --surface:#2A2424; --ink:#F3ECEA; --ink-soft:#B3A6A3; --ink-faint:#7D716F;
+      --seat-fill-soft:#3A2A30; --line:#3E3434; --green-bg:#23382C; --green:#8FD0A8;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1E1A1A; --surface:#2A2424; --ink:#F3ECEA; --ink-soft:#B3A6A3; --ink-faint:#7D716F;
+    --seat-fill-soft:#3A2A30; --line:#3E3434; --green-bg:#23382C; --green:#8FD0A8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:var(--font-body);color:var(--ink);min-height:100vh;display:flex;justify-content:center;padding:32px 16px 60px;}
+  .wrap{width:100%;max-width:420px;}
+  .eyebrow{font-family:var(--font-mono);font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:var(--seat-strong-ink);background:var(--seat-fill-soft);display:inline-block;padding:6px 12px;border-radius:100px;margin-bottom:16px;}
+  .card{background:var(--surface);border-radius:20px;padding:28px 24px 26px;box-shadow:0 1px 2px rgba(36,31,31,0.04);}
+  h1{font-size:27px;font-weight:900;line-height:1.4;margin:0 0 8px;}
+  .sub{font-size:17px;color:var(--ink-soft);margin:0 0 20px;line-height:1.5;}
+  input[type=text]{width:100%;font-family:var(--font-body);font-size:19px;padding:16px 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);outline:none;}
+  input[type=text]:focus{border-color:var(--seat-strong);}
+  .btn{width:100%;font-family:var(--font-body);font-size:18px;font-weight:700;padding:16px;border-radius:12px;border:none;cursor:pointer;margin-top:12px;background:var(--ink);color:var(--surface);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);font-weight:500;font-size:16px;padding:10px;margin-top:8px;}
+  .err{font-size:15px;color:#A32D2D;margin-top:8px;display:none;}
+  .name-list{list-style:none;margin:6px 0 0;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);display:none;}
+  .name-list li{padding:13px 18px;font-size:17px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;}
+  .name-list li:last-child{border-bottom:none;}
+  .name-list li:hover{background:var(--seat-fill-soft);}
+  .name-list li span{color:var(--ink-faint);font-family:var(--font-mono);font-size:14px;}
+  .tag{font-family:var(--font-mono);font-size:14px;font-weight:600;letter-spacing:0.05em;color:var(--seat-strong-ink);background:var(--seat-fill-soft);display:inline-block;padding:5px 12px;border-radius:100px;margin-bottom:12px;}
+  h2.big{font-size:29px;font-weight:900;line-height:1.45;margin:0 0 20px;}
+  h2.big em{font-style:normal;color:var(--seat-strong-ink);}
+  .seatmap{width:100%;display:block;margin:0 0 22px;}
+  .divider{height:1px;background:var(--line);margin:22px 0;border:none;}
+  .section-title{font-size:16px;color:var(--ink-soft);font-weight:500;margin:0 0 10px;text-align:center;}
+  .confirm-note{font-size:14px;color:var(--ink-soft);text-align:center;margin-top:10px;}
+  .footer-links{text-align:center;margin-top:18px;}
+  .footer-links a{font-size:15px;color:var(--ink-faint);text-decoration:none;}
+  .admin-back{font-size:16px;color:var(--ink-soft);cursor:pointer;margin-bottom:14px;display:inline-block;text-decoration:none;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .stat{background:var(--bg);border-radius:12px;padding:14px;}
+  .stat .n{font-family:var(--font-mono);font-size:26px;font-weight:700;}
+  .stat .l{font-size:14px;color:var(--ink-soft);margin-top:2px;}
+  .qr-box{text-align:center;background:var(--bg);border-radius:14px;padding:18px 12px;margin-bottom:20px;}
+  .qr-box .inner{display:inline-block;background:#fff;padding:10px;border-radius:10px;}
+  .qr-box .url{font-family:var(--font-mono);font-size:13px;color:var(--ink-faint);margin-top:6px;word-break:break-all;}
+  .team-block{margin-bottom:16px;}
+  .team-block h3{font-size:16px;margin:0 0 6px;}
+  table.admin-table{width:100%;border-collapse:collapse;font-size:15px;}
+  table.admin-table th{text-align:left;color:var(--ink-soft);font-weight:500;font-size:13px;padding:7px 4px;border-bottom:1px solid var(--line);}
+  table.admin-table td{padding:8px 4px;border-bottom:1px solid var(--line);}
+  .loading{text-align:center;padding:30px 0;color:var(--ink-soft);font-size:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow" id="eyebrowTrigger">출석체크</div>
+  <div id="root"></div>
+</div>
+
+<script src="data/roster.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const CFG = window.ATTENDANCE || { title: '출석체크', subtitle: '', teams: 1, people: [] };
+const root = document.getElementById('root');
+
+// 조 편성: 팀 단위로 묶은 뒤, 인원이 많은 팀부터 조에 돌아가며 배정 → 같은 팀이 한 조에 몰리지 않음
+function assignTeams(people, teamCount){
+  const groups = {};
+  people.forEach(p => { const k = p.dept || '기타'; (groups[k] = groups[k] || []).push(p); });
+  const flat = Object.values(groups).sort((a,b)=> b.length - a.length).flat();
+  const teams = Array.from({length: teamCount}, () => []);
+  flat.forEach((p, i) => teams[i % teamCount].push(p));
+  const result = [];
+  teams.forEach((t, ti) => t.forEach((p, si) => result.push({ name: p.name, rank: p.rank, dept: p.dept, part: p.part, team: ti + 1, seat: si + 1 })));
+  return result;
+}
+const ATTENDEES = assignTeams(
+  (CFG.people || []).map(([name, rank, dept, part]) => ({ name, rank, dept, part })),
+  CFG.teams || 1
+);
+const TEAM_COUNT = CFG.teams || 1;
+
+function teamGridSVG(highlightTeam){
+  const cols = Math.ceil(Math.sqrt(TEAM_COUNT));
+  const rows = Math.ceil(TEAM_COUNT / cols);
+  const cell = 84, gap = 10, pad = 6;
+  let cells = '';
+  for(let t = 1; t <= TEAM_COUNT; t++){
+    const r = Math.floor((t-1) / cols), c = (t-1) % cols;
+    const x = pad + c*(cell+gap), y = pad + r*(cell+gap);
+    const hi = t === highlightTeam;
+    cells += `<g>
+      <rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="10" fill="${hi?'#D8506E':'#FBEAF0'}" stroke="${hi?'#D8506E':'#EBDEDB'}" stroke-width="1.5"/>
+      <text x="${x+cell/2}" y="${y+cell/2+7}" text-anchor="middle" font-family="IBM Plex Mono" font-size="22" font-weight="700" fill="${hi?'#FFFFFF':'#B9ADAA'}">${t}</text>
+    </g>`;
+  }
+  const w = pad*2 + cell*cols + gap*(cols-1);
+  const h = pad*2 + cell*rows + gap*(rows-1);
+  return `<svg class="seatmap" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="max-width:220px;margin-left:auto;margin-right:auto;">${cells}</svg>`;
+}
+
+function seatSVG(highlightSeat){
+  const seats = [
+    {n:1,x:34,y:38},{n:2,x:34,y:82},
+    {n:6,x:266,y:38},{n:5,x:266,y:82},
+    {n:3,x:112,y:176},{n:4,x:188,y:176}
+  ];
+  const circles = seats.map(s=>{
+    const hi = s.n === highlightSeat;
+    return `<g>
+      <circle cx="${s.x}" cy="${s.y}" r="17" fill="${hi?'#D8506E':'#FFFFFF'}" stroke="${hi?'#D8506E':'#E3D4D1'}" stroke-width="${hi?0:1.5}"/>
+      <text x="${s.x}" y="${s.y+5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" fill="${hi?'#FFFFFF':'#B9ADAA'}">${s.n}</text>
+    </g>`;
+  }).join('');
+  return `<svg class="seatmap" viewBox="0 0 300 210" xmlns="http://www.w3.org/2000/svg">
+    <rect x="110" y="12" width="80" height="96" rx="6" fill="#F6C6C6"/>
+    <rect x="70" y="108" width="160" height="46" rx="6" fill="#F6C6C6"/>
+    ${circles}
+  </svg>`;
+}
+
+function renderSearch(){
+  root.innerHTML = `
+    <div class="card">
+      <h1>본인의 이름을 입력해주세요</h1>
+      <p class="sub">출석 확인과 조·좌석 안내를 도와드릴게요.</p>
+      <input type="text" id="nameInput" placeholder="이름 입력 (예: 홍길동)" autocomplete="off">
+      <ul class="name-list" id="nameList"></ul>
+      <div class="err" id="nameErr">명단에서 이름을 찾을 수 없어요. 이름을 다시 확인해주세요.</div>
+      <button class="btn" id="confirmBtn">확인</button>
+    </div>`;
+  const input = document.getElementById('nameInput');
+  const list = document.getElementById('nameList');
+  const err = document.getElementById('nameErr');
+
+  function updateSuggestions(){
+    const v = input.value.trim();
+    err.style.display = 'none';
+    if(!v){ list.style.display='none'; list.innerHTML=''; return; }
+    const matches = ATTENDEES.filter(a=>a.name.includes(v)).slice(0,6);
+    if(matches.length===0){ list.style.display='none'; list.innerHTML=''; return; }
+    list.innerHTML = matches.map(a=>`<li data-name="${a.name}">${a.name}<span>${a.team}조 ${a.seat}번</span></li>`).join('');
+    list.style.display = 'block';
+    list.querySelectorAll('li').forEach(li=>{
+      li.addEventListener('click',()=>{ input.value = li.dataset.name; list.style.display='none'; tryConfirm(); });
+    });
+  }
+  function tryConfirm(){
+    const v = input.value.trim().replace(/\s+/g,'');
+    const found = ATTENDEES.find(a=>a.name.replace(/\s+/g,'')===v);
+    if(!found){ err.style.display='block'; return; }
+    renderConfirm(found);
+  }
+  input.addEventListener('input', updateSuggestions);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') tryConfirm(); });
+  document.getElementById('confirmBtn').addEventListener('click', tryConfirm);
+}
+
+function renderConfirm(a){
+  root.innerHTML = `
+    <div class="card">
+      <div class="tag">SEAT · ${a.team}조 ${a.seat}번</div>
+      <h2 class="big">${a.name}님은<br><em>${a.team}조 ${a.seat}번 좌석</em>입니다</h2>
+      <div class="section-title">전체 조 배치 · ${a.team}조 위치</div>
+      ${teamGridSVG(a.team)}
+      <div class="section-title" style="margin-top:18px;">${a.team}조 테이블 · ${a.seat}번 좌석</div>
+      ${seatSVG(a.seat)}
+      <div class="confirm-note">${a.dept} · ${a.part || ''}</div>
+      <hr class="divider">
+      <div class="footer-links"><a href="#" id="backLink">다른 이름으로 확인하기</a></div>
+    </div>`;
+  document.getElementById('backLink').addEventListener('click', e=>{ e.preventDefault(); renderSearch(); });
+}
+
+function showAdmin(){
+  const total = ATTENDEES.length;
+  const byTeam = {};
+  ATTENDEES.forEach(a => (byTeam[a.team] = byTeam[a.team] || []).push(a));
+  const teamHTML = Object.keys(byTeam).sort((x,y)=>x-y).map(t=>{
+    const rows = byTeam[t].map(a=>`<tr><td>${a.seat}</td><td>${a.name}</td><td>${a.rank||''}</td><td>${a.dept||''}</td><td>${a.part||''}</td></tr>`).join('');
+    const depts = new Set(byTeam[t].map(a=>a.dept)).size;
+    return `<div class="team-block"><h3>${t}조 <span style="font-weight:400;color:var(--ink-soft);font-size:13px;">${byTeam[t].length}명 · ${depts}개 팀</span></h3>
+      <table class="admin-table"><thead><tr><th>좌석</th><th>성명</th><th>직급</th><th>팀</th><th>파트</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }).join('');
+
+  root.innerHTML = `
+    <div class="card">
+      <a class="admin-back" href="#" id="adminBack">← 돌아가기</a>
+      <h1>${CFG.title} · 관리자</h1>
+      <p class="sub">${CFG.subtitle || ''} · 전체 ${total}명 · ${TEAM_COUNT}개 조</p>
+      <div class="stat-grid">
+        <div class="stat"><div class="n">${total}</div><div class="l">참석자</div></div>
+        <div class="stat"><div class="n">${TEAM_COUNT}</div><div class="l">조</div></div>
+      </div>
+      ${CFG.qrUrl ? `<div class="qr-box"><div class="inner" id="qrcodeBox"></div><div style="font-size:14px;color:var(--ink-soft);margin-top:8px;">참가자용 QR · 캡처해서 인쇄하세요</div><div class="url">${CFG.qrUrl}</div></div>` : ''}
+      ${teamHTML}
+    </div>`;
+  document.getElementById('adminBack').addEventListener('click', e=>{ e.preventDefault(); renderSearch(); });
+  const qrBox = document.getElementById('qrcodeBox');
+  if(qrBox && window.QRCode){
+    new QRCode(qrBox, { text: CFG.qrUrl, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
+  }
+}
+
+// 관리자 화면 진입: ?admin=1 또는 제목을 5번 연속 클릭
+let tapCount = 0, tapTimer = null;
+document.getElementById('eyebrowTrigger').textContent = CFG.title;
+document.getElementById('eyebrowTrigger').addEventListener('click', ()=>{
+  tapCount++; clearTimeout(tapTimer); tapTimer = setTimeout(()=>{ tapCount = 0; }, 1200);
+  if(tapCount >= 5){ tapCount = 0; showAdmin(); }
+});
+
+if(new URLSearchParams(window.location.search).get('admin') === '1'){ showAdmin(); }
+else { renderSearch(); }
+</script>
+</body>
+</html>
