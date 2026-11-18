@@ -78,7 +78,7 @@
   <div id="root"></div>
 </div>
 
-<script src="data/roster.js?v=4"></script>
+<script src="data/roster.js?v=5"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const CFG = window.ATTENDANCE || { title: '출석체크', subtitle: '', teams: 1, people: [] };
@@ -175,6 +175,14 @@ async function loadCheckins(){
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const map = {};
+    if(data.ok === false) throw new Error(data.error || 'server error');
+    // Apps Script는 참석여부가 O인 이름 목록(checked)을 돌려줌. 시트에 시간은 없으므로 이 기기 기록이 있으면 그 시간을 씀
+    const strip = s => String(s || '').replace(/\s+/g, '');
+    (data.checked || []).forEach(n => {
+      const a = ATTENDEES.find(x => strip(x.name) === strip(n));
+      const key = a ? a.name : n;
+      if(!map[key]) map[key] = local[key] || { time: '', team: a && a.team, seat: a && a.seat };
+    });
     (data.checkins || []).forEach(c => { if(c.name && !map[c.name]) map[c.name] = { time: c.time, team: c.team, seat: c.seat }; });
     return { source: 'server', map };
   } catch(e) {

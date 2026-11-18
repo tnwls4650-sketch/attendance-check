@@ -12,7 +12,7 @@
 window.ATTENDANCE = {
   title: "'26 Value Chain School(11월) - 영업본부",
   subtitle: "",
-  checkinUrl: "", // 체크인 기록을 저장할 Apps Script 웹앱 주소 (apps-script/Code.gs 배포 후 입력)
+  checkinUrl: "https://script.google.com/macros/s/AKfycbwBV20g1hUm6jMo0_IhSEZPcsSU4BGc6dH2G4t5CdPa84Jm4yVW6wq8CnNKmBZTAodv/exec", // 체크인 기록을 저장할 Apps Script 웹앱 주소 (apps-script/Code.gs 배포 후 입력)
   teams: 9,
   shuffleSeed: 2026, // 조 구성 번호. 값을 바꾸면 같은 규칙으로 다른 조 편성이 나옵니다 (0이면 기본 순서)
   swaps: [["서효림", "허종욱"]], // 두 사람의 조·좌석 맞바꾸기 (서효림 → 9조, 허종욱 → 2조)

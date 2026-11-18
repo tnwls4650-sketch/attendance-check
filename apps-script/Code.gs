@@ -16,6 +16,7 @@
   5. 코드를 고치면 [배포] → [배포 관리] → 연필 → [새 버전] → 배포 (URL은 그대로 유지됩니다)
 */
 
+const SHEET_ID = '1VfigZ4E6KF06ybVEyIvihmz6gcyMzyZiwTRVzVIVhJs'; // 출석체크_명단(11월) 시트
 const ROSTER_SHEET = '명단(11월)';   // 명단 탭 이름
 const NAME_HEADER = '성명';           // 이름이 있는 열의 제목
 const CHECK_HEADER = '참석여부';      // O를 표시할 열의 제목
@@ -58,7 +59,7 @@ function doGet(){
 }
 
 function getRosterSheet_(){
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ROSTER_SHEET);
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(ROSTER_SHEET);
   if(!sheet) throw new Error('탭을 찾을 수 없습니다: ' + ROSTER_SHEET);
   return sheet;
 }
