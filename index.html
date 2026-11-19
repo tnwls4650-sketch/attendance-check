@@ -215,12 +215,15 @@ function teamGridSVG(highlightTeam){
   return `<svg class="seatmap" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="max-width:220px;margin-left:auto;margin-right:auto;">${cells}</svg>`;
 }
 
-function seatSVG(highlightSeat){
+function seatSVG(highlightSeat, seatCount){
   const seats = [
     {n:1,x:34,y:38},{n:2,x:34,y:82},
     {n:6,x:266,y:38},{n:5,x:266,y:82},
     {n:3,x:112,y:176},{n:4,x:188,y:176}
   ];
+  // 7명인 조는 테이블 위쪽 끝에 7번 좌석 추가
+  const extra = (seatCount || 0) >= 7;
+  if(extra) seats.push({n:7,x:150,y:-14});
   const circles = seats.map(s=>{
     const hi = s.n === highlightSeat;
     return `<g>
@@ -228,7 +231,7 @@ function seatSVG(highlightSeat){
       <text x="${s.x}" y="${s.y+5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="700" fill="${hi?'#FFFFFF':'#B9ADAA'}">${s.n}</text>
     </g>`;
   }).join('');
-  return `<svg class="seatmap" viewBox="0 0 300 210" xmlns="http://www.w3.org/2000/svg">
+  return `<svg class="seatmap" viewBox="${extra ? '0 -38 300 248' : '0 0 300 210'}" xmlns="http://www.w3.org/2000/svg">
     <rect x="110" y="12" width="80" height="96" rx="6" fill="#F6C6C6"/>
     <rect x="70" y="108" width="160" height="46" rx="6" fill="#F6C6C6"/>
     ${circles}
@@ -282,7 +285,7 @@ function renderConfirm(a){
       <div class="section-title">전체 조 배치 · ${a.team}조 위치</div>
       ${teamGridSVG(a.team)}
       <div class="section-title" style="margin-top:18px;">${a.team}조 테이블 · ${a.seat}번 좌석</div>
-      ${seatSVG(a.seat)}
+      ${seatSVG(a.seat, ATTENDEES.filter(x => x.team === a.team).length)}
       <div class="confirm-note">${a.dept} · ${a.part || ''}</div>
       <hr class="divider">
       <div class="footer-links"><a href="#" id="backLink">다른 이름으로 확인하기</a></div>
